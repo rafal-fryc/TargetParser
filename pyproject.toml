@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "targetparser"
+version = "0.1.0"
+description = "Anti-hallucination PDF line extraction and verification toolkit"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["pdfplumber>=0.10", "pypdf>=4.0"]
+
+[project.optional-dependencies]
+mcp = ["mcp[cli]>=1.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+targetparser-mcp = "targetparser.mcp_server:main"
