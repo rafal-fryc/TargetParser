@@ -48,7 +48,7 @@ def extract_lines(
         keep_page_markers: If False (default), ``--- Page N ---`` lines are
             stripped from the output.
         clean: If True, run LLM-based cleanup to strip embedded line numbers.
-            Requires the ``anthropic`` package (``pip install targetparser[llm]``).
+            Requires the ``anthropic`` package (``pip install -e '.[llm]'``).
             Silently skipped if the package is not installed.
         clean_kwargs: Optional keyword arguments passed to ``clean_text()``.
 

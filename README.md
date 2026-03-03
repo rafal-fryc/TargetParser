@@ -110,10 +110,10 @@ result = extract_lines(document_text, 42, 45, clean=True)
 resolve_items(doc.text, llm_findings, clean=True)
 ```
 
-Cleanup is best-effort: if the `anthropic` package isn't installed or the API call fails, the original text is returned unchanged. Install with:
+Cleanup is best-effort: if the `anthropic` package isn't installed or the API call fails, the original text is returned unchanged. Install the LLM dependency with:
 
 ```bash
-pip install targetparser[llm]
+pip install -e ".[llm]"
 ```
 
 ### Verification Engine

@@ -66,7 +66,7 @@ def clean_text(
     if not _HAS_ANTHROPIC:
         raise NotImplementedError(
             "LLM cleanup requires the 'anthropic' package. "
-            "Install with: pip install targetparser[llm]"
+            "Install with: pip install -e '.[llm]'"
         )
 
     try:

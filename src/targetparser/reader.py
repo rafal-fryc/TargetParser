@@ -62,7 +62,7 @@ def read_pdf(path: str | Path) -> ReadResult:
     if not (_HAS_PDFPLUMBER or _HAS_PYPDF):
         raise NotImplementedError(
             "PDF parsing requires 'pdfplumber' or 'pypdf'. "
-            "Install with: pip install targetparser[pdf]"
+            "Install with: pip install -e '.[pdf]'"
         )
 
     text_parts: list[str] = []

@@ -103,7 +103,7 @@ def clean_text(path: str, start_line: int, end_line: int) -> str:
     lines, then uses a small language model to strip any embedded line numbers
     from the text (common in legal filings, code listings, and specifications).
 
-    Requires the ``anthropic`` package (install with ``pip install targetparser[llm]``).
+    Requires the ``anthropic`` package (install with ``pip install -e '.[llm]'``).
 
     Args:
         path: Path used in a prior read_pdf call.
@@ -122,7 +122,7 @@ def clean_text(path: str, start_line: int, end_line: int) -> str:
         return (
             f"Lines {result.start_line}-{result.end_line} ({result.num_lines} content lines):\n\n"
             f"{result.text}\n\n"
-            f"Note: LLM cleanup unavailable. Install with: pip install targetparser[llm]"
+            f"Note: LLM cleanup unavailable. Install with: pip install -e '.[llm]'"
         )
 
     status = "cleaned" if clean_result.changed else "unchanged"
