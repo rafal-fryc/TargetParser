@@ -95,6 +95,44 @@ def verify_text(path: str, quoted_text: str) -> str:
     return "\n".join(parts)
 
 
+@server.tool()
+def clean_text(path: str, start_line: int, end_line: int) -> str:
+    """Extract text from a document by line range and clean embedded line numbers using an LLM.
+
+    This combines extraction with LLM-powered cleanup: extracts the specified
+    lines, then uses a small language model to strip any embedded line numbers
+    from the text (common in legal filings, code listings, and specifications).
+
+    Requires the ``anthropic`` package (install with ``pip install targetparser[llm]``).
+
+    Args:
+        path: Path used in a prior read_pdf call.
+        start_line: First line to extract (1-based, inclusive).
+        end_line: Last line to extract (1-based, inclusive).
+    """
+    text, _ = _get_or_read(path)
+    result = _extract_lines(text, start_line, end_line)
+    if not result.text:
+        return f"No content found in lines {start_line}-{end_line}."
+
+    try:
+        from .cleaner import clean_text as _clean_text
+        clean_result = _clean_text(result.text)
+    except NotImplementedError:
+        return (
+            f"Lines {result.start_line}-{result.end_line} ({result.num_lines} content lines):\n\n"
+            f"{result.text}\n\n"
+            f"Note: LLM cleanup unavailable. Install with: pip install targetparser[llm]"
+        )
+
+    status = "cleaned" if clean_result.changed else "unchanged"
+    header = f"Lines {result.start_line}-{result.end_line} ({result.num_lines} content lines, {status}):"
+    parts = [header, "", clean_result.text]
+    if clean_result.error:
+        parts.append(f"\nWarning: cleanup error ({clean_result.error}), showing original text.")
+    return "\n".join(parts)
+
+
 def main():
     """Entry point for ``targetparser-mcp`` console script."""
     server.run()

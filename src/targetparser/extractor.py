@@ -35,6 +35,8 @@ def extract_lines(
     *,
     join: str = " ",
     keep_page_markers: bool = False,
+    clean: bool = False,
+    clean_kwargs: dict | None = None,
 ) -> ExtractionResult:
     """Extract text from a line range in a document.
 
@@ -45,6 +47,10 @@ def extract_lines(
         join: String used to join extracted lines. Default is a single space.
         keep_page_markers: If False (default), ``--- Page N ---`` lines are
             stripped from the output.
+        clean: If True, run LLM-based cleanup to strip embedded line numbers.
+            Requires the ``anthropic`` package (``pip install targetparser[llm]``).
+            Silently skipped if the package is not installed.
+        clean_kwargs: Optional keyword arguments passed to ``clean_text()``.
 
     Returns:
         ExtractionResult with the extracted text and metadata.
@@ -67,8 +73,19 @@ def extract_lines(
         if stripped:
             extracted.append(stripped)
 
+    result_text = join.join(extracted)
+
+    if clean:
+        try:
+            from .cleaner import clean_text
+            clean_result = clean_text(result_text, **(clean_kwargs or {}))
+            if clean_result.changed:
+                result_text = clean_result.text
+        except NotImplementedError:
+            pass  # anthropic not installed — skip silently
+
     return ExtractionResult(
-        text=join.join(extracted),
+        text=result_text,
         start_line=start_idx + 1,
         end_line=end_idx,
         num_lines=len(extracted),
@@ -81,6 +98,8 @@ def resolve_items(
     start_key: str = "quote_start_line",
     end_key: str = "quote_end_line",
     output_key: str = "quoted_text",
+    clean: bool = False,
+    clean_kwargs: dict | None = None,
 ) -> list[dict]:
     """Batch-resolve line numbers in LLM JSON output.
 
@@ -94,6 +113,8 @@ def resolve_items(
         start_key: Key holding the start line number.
         end_key: Key holding the end line number.
         output_key: Key to write the extracted text into.
+        clean: If True, run LLM-based cleanup on each extracted text.
+        clean_kwargs: Optional keyword arguments passed to ``clean_text()``.
 
     Returns:
         The same *items* list, mutated with *output_key* filled in.
@@ -105,7 +126,10 @@ def resolve_items(
         if start is None or end is None:
             continue
 
-        result = extract_lines(document_text, int(start), int(end))
+        result = extract_lines(
+            document_text, int(start), int(end),
+            clean=clean, clean_kwargs=clean_kwargs,
+        )
         if result.text:
             item[output_key] = result.text
 

@@ -12,6 +12,7 @@ dependencies = ["pdfplumber>=0.10", "pypdf>=4.0"]
 
 [project.optional-dependencies]
 mcp = ["mcp[cli]>=1.0"]
+llm = ["anthropic>=0.40"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
