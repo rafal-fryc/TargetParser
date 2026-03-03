@@ -11,7 +11,8 @@ When LLMs extract information from PDFs, they often hallucinate quotes — retur
 1. **Read** the PDF into line-numbered text
 2. **LLM identifies** the relevant line numbers (not the text itself)
 3. **Python extracts** the exact text from those lines
-4. **Verify** that any quoted text actually exists in the source
+4. **Clean** embedded line numbers from extracted text via LLM (optional)
+5. **Verify** that any quoted text actually exists in the source
 
 ## Where It Fits
 
@@ -30,6 +31,9 @@ Your LLM / agent        →  "The relevant clause is on lines 42-45"
   │
   ▼
 extract_lines()         →  Exact text from lines 42-45 (deterministic)
+  │
+  ▼
+clean_text()            →  Strip embedded line numbers via LLM (optional)
   │
   ▼
 Verifier.verify()       →  Confirms the text exists in the source (optional)
@@ -81,6 +85,37 @@ print(result.text)       # Exact text from lines 42-45
 print(result.num_lines)  # Number of content lines extracted
 ```
 
+### Example: LLM Cleanup
+
+PDF sources like legal filings, code listings, and specifications often have line numbers embedded in the text (e.g., `1`, `1.`, `[1]`, margin numbers). These leak into extracted text and are too varied for regex. The `clean_text()` function uses a small, fast LLM to strip them:
+
+```python
+from targetparser import clean_text
+
+# Direct cleanup of any text
+result = clean_text("1  The parties agree to the following terms.\n2  Section A defines...")
+print(result.text)     # "The parties agree to the following terms.\nSection A defines..."
+print(result.changed)  # True
+```
+
+You can also opt in during extraction — pass `clean=True` to `extract_lines()` or `resolve_items()`:
+
+```python
+from targetparser import extract_lines, resolve_items
+
+# Extraction + cleanup in one step
+result = extract_lines(document_text, 42, 45, clean=True)
+
+# Batch resolution + cleanup
+resolve_items(doc.text, llm_findings, clean=True)
+```
+
+Cleanup is best-effort: if the `anthropic` package isn't installed or the API call fails, the original text is returned unchanged. Install with:
+
+```bash
+pip install targetparser[llm]
+```
+
 ### Verification Engine
 
 The `Verifier` uses a 6-tier matching strategy to handle the messy reality of PDF text extraction (encoding quirks, smart quotes, line breaks mid-sentence):
@@ -105,12 +140,13 @@ result.line_numbers # (start_line, end_line) where found
 
 ## MCP Server
 
-TargetParser includes an MCP (Model Context Protocol) server so any LLM agent can call the pipeline directly. It exposes three tools:
+TargetParser includes an MCP (Model Context Protocol) server so any LLM agent can call the pipeline directly. It exposes four tools:
 
 | Tool | Description |
 |------|-------------|
 | `read_pdf` | Read a PDF and cache its text server-side |
 | `extract_lines` | Extract text from a cached document by line range |
+| `clean_text` | Extract text and strip embedded line numbers via LLM |
 | `verify_text` | Verify whether quoted text appears in a cached document |
 
 Add to your `claude_desktop_config.json`:
